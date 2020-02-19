@@ -1,0 +1,12 @@
+scipy==0.19.1
+seaborn==0.9.0
+torch==1.2.0
+cvxpy==1.0.25
+torchvision==0.4.0
+pandas==0.22.0
+matplotlib==2.1.1
+opencv_python==3.4.2.17
+prettytable==0.7.2
+numpy==1.13.3
+Pillow==7.0.0
+mosek==9.1.12
