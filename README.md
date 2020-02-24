@@ -68,11 +68,11 @@ with same arguments as sparsifying models to plot the pruning percentage and the
 
 ## References
 ```
-@misc{2002.07259,
-Author = {Mostafa ElAraby and Guy Wolf and Margarida Carvalho},
-Title = {Identifying Critical Neurons in ANN Architectures using Mixed Integer Programming},
-Year = {2020},
-Eprint = {arXiv:2002.07259},
+@article{elaraby2020identifying,
+  title={Identifying Critical Neurons in ANN Architectures using Mixed Integer Programming},
+  author={ElAraby, Mostafa and Wolf, Guy and Carvalho, Margarida},
+  journal={arXiv preprint arXiv:2002.07259},
+  year={2020}
 }
 @article{mosek2010mosek,
   title={The MOSEK optimization software},
