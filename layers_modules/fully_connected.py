@@ -29,7 +29,7 @@ class FullyConnected(SubModule):
         self.bias_value = np.repeat(
             self.bias.reshape(1, -1), self.batch_size, axis=0)
 
-        self.layer_out = cp.Variable(
+        self.layer_input = cp.Variable(
             (batch_size, pytorch_layer.in_features), name)
 
         if self.is_last_layer:
@@ -53,18 +53,13 @@ class FullyConnected(SubModule):
         constraints = []
         if self.activation is None:
             critical_prob = prev_layer.get_critical_neurons(None)
-            upper_bound = prev_layer.upper_bound.reshape(self.batch_size, -1)
-            lower_bound = prev_layer.lower_bound.reshape(self.batch_size, -1)
+            upper_bound, _ = prev_layer.get_bounds()
             if critical_prob is None:
-                keep_lower_bound = 0
+                keep_upper_bound = 0
             else:
-                keep_lower_bound = cp.multiply(1 - critical_prob, lower_bound)
+                keep_upper_bound = cp.multiply(1 - critical_prob, upper_bound)
             constraints += [
-                self.layer_out >= prev_layer_computation -
-                cp.multiply(1 - critical_prob, upper_bound),
-                prev_layer_computation -
-                cp.multiply(1 - critical_prob,
-                            upper_bound) >= self.layer_out + keep_lower_bound,
+                self.layer_input == prev_layer_computation - keep_upper_bound
             ]
         else:
             constraints += self.activation.get_constraints(self, prev_layer)
@@ -85,7 +80,7 @@ class FullyConnected(SubModule):
         Returns:
             cvxpy.variable -- cvxpy variable holding output of current layer
         """
-        return self.layer_out
+        return self.layer_input
 
     def get_output_shape(self):
         """
@@ -123,7 +118,7 @@ class FullyConnected(SubModule):
         Returns:
             cvxpy.variable  -- returns a variable holding output of current layer after applying weights and biases
         """        
-        return self.layer_out @ self.weights_value + self.bias_value
+        return self.layer_input @ self.weights_value + self.bias_value
 
     def get_first_layer_constraints(self, input_data):
         """returns constraints associated with first layer
@@ -136,7 +131,7 @@ class FullyConnected(SubModule):
         """        
         if input_data.ndim > 2:
             input_data = input_data.reshape(self.batch_size, -1)
-        return [self.layer_out == input_data]
+        return [self.layer_input == input_data]
 
     def get_sparsified_param_size(self, masked_indices):
         """compute the number of pruned parameters for this layer
