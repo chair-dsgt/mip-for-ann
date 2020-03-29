@@ -138,12 +138,12 @@ if __name__ == '__main__':
     plot_df(dataframe_masked, batch_accuracy_path, ylabel='Batch Accuracy',
             xlabel='batch index', disable_x_axis=True)
 
-    # Plot Accuracy of validation batch on input data
+    # Plot Loss of validation batch on input data
     dataframe_masked = create_dataframe(
         x_data, val_batch_loss, '')
     batch_loss_path = os.path.join(
         model_train.storage_parent_dir, 'val_batch_loss.jpg')
-    plot_df(dataframe_masked, batch_accuracy_path, ylabel='Batch Loss',
+    plot_df(dataframe_masked, batch_loss_path, ylabel='Batch Loss',
             xlabel='batch index', disable_x_axis=True)
 
     def log_info(suffix, data):
