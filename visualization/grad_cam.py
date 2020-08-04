@@ -3,14 +3,14 @@ import cv2
 import numpy as np
 import torch
 from torch.autograd import Function
-from torchvision import models
-import copy 
+import copy
 
 # from https://github.com/jacobgil/pytorch-grad-cam
 # with slight changes to work with current code
 # https://arxiv.org/pdf/1610.02391v1.pdf
 
-class FeatureExtractor():
+
+class FeatureExtractor:
     """ Class for extracting activations and 
     registering gradients from targetted intermediate layers """
 
@@ -34,7 +34,7 @@ class FeatureExtractor():
         return outputs, x
 
 
-class ModelOutputs():
+class ModelOutputs:
     """ Class for making a forward pass, and getting:
     1. The network output.
     2. Activations from intermeddiate targetted layers.
@@ -43,8 +43,7 @@ class ModelOutputs():
     def __init__(self, model, intermediate_layers):
         self.model = model
         self.last_intermediate_layer = int(intermediate_layers[-1])
-        self.feature_extractor = FeatureExtractor(
-            self.model, intermediate_layers)
+        self.feature_extractor = FeatureExtractor(self.model, intermediate_layers)
 
     def get_gradients(self):
         return self.feature_extractor.gradients
@@ -66,8 +65,7 @@ def preprocess_image(img):
     for i in range(3):
         preprocessed_img[:, :, i] = preprocessed_img[:, :, i] - means[i]
         preprocessed_img[:, :, i] = preprocessed_img[:, :, i] / stds[i]
-    preprocessed_img = \
-        np.ascontiguousarray(np.transpose(preprocessed_img, (2, 0, 1)))
+    preprocessed_img = np.ascontiguousarray(np.transpose(preprocessed_img, (2, 0, 1)))
     preprocessed_img = torch.from_numpy(preprocessed_img)
     preprocessed_img.unsqueeze_(0)
     input = preprocessed_img.requires_grad_(True)
@@ -138,12 +136,12 @@ class GradCam:
 
 
 class GuidedBackpropReLU(Function):
-
     @staticmethod
     def forward(self, input):
         positive_mask = (input > 0).type_as(input)
-        output = torch.addcmul(torch.zeros(
-            input.size()).type_as(input), input, positive_mask)
+        output = torch.addcmul(
+            torch.zeros(input.size()).type_as(input), input, positive_mask
+        )
         self.save_for_backward(input, output)
         return output
 
@@ -154,9 +152,13 @@ class GuidedBackpropReLU(Function):
 
         positive_mask_1 = (input > 0).type_as(grad_output)
         positive_mask_2 = (grad_output > 0).type_as(grad_output)
-        grad_input = torch.addcmul(torch.zeros(input.size()).type_as(input),
-                                   torch.addcmul(torch.zeros(input.size()).type_as(input), grad_output,
-                                                 positive_mask_1), positive_mask_2)
+        grad_input = torch.addcmul(
+            torch.zeros(input.size()).type_as(input),
+            torch.addcmul(
+                torch.zeros(input.size()).type_as(input), grad_output, positive_mask_1
+            ),
+            positive_mask_2,
+        )
 
         return grad_input
 
@@ -171,7 +173,7 @@ class GuidedBackpropReLUModel:
 
         # replace ReLU with GuidedBackpropReLU
         for idx, module in self.model._modules.items():
-            if module.__class__.__name__ == 'ReLU' and int(idx) <= last_feature_indx:
+            if module.__class__.__name__ == "ReLU" and int(idx) <= last_feature_indx:
                 self.model._modules[idx] = GuidedBackpropReLU.apply
 
     def forward(self, x):
@@ -198,6 +200,7 @@ class GuidedBackpropReLUModel:
             one_hot = torch.sum(one_hot * output)
 
         one_hot.backward(retain_graph=True)
+        # FIXME fix no grad problem on the input tensor
         output = tensor_image.grad.cpu().data.numpy()
         output = output[0, :, :, :]
 
@@ -206,10 +209,15 @@ class GuidedBackpropReLUModel:
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--use-cuda', action='store_true', default=False,
-                        help='Use NVIDIA GPU acceleration')
-    parser.add_argument('--image-path', type=str, default='./examples/both.png',
-                        help='Input image path')
+    parser.add_argument(
+        "--use-cuda",
+        action="store_true",
+        default=False,
+        help="Use NVIDIA GPU acceleration",
+    )
+    parser.add_argument(
+        "--image-path", type=str, default="./examples/both.png", help="Input image path"
+    )
     args = parser.parse_args()
     args.use_cuda = args.use_cuda and torch.cuda.is_available()
     if args.use_cuda:
@@ -227,5 +235,5 @@ def deprocess_image(img):
     img = img * 0.1
     img = img + 0.5
     img = np.clip(img, 0, 1)
-    return np.uint8(img*255)
+    return np.uint8(img * 255)
 

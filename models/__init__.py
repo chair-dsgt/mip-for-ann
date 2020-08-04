@@ -4,4 +4,7 @@ from .fc_4_model import FullyConnected4Model
 from .fc_baseline_model import FullyConnectedBaselineModel
 from .conv_baseline_model import ConvBaselineModel
 from .vgg19 import VGG19
+from .vgg16 import VGG16
+from .vgg16_nobn import VGG16NoBn
 from .vgg7 import VGG7
+from .conv_models import ConvModel

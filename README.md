@@ -1,6 +1,6 @@
 # Identify critical neurons using Mixed Integer Programming
 
-A novel way of computing neuron importance score at fully connected layers and using these computed scores to prune non-critical neurons with marginal loss in the accuracy without fine tuning or retraining .
+A novel way of computing neuron importance score at fully connected / convolutional layers and using these computed scores to prune non-critical neurons with marginal loss in the accuracy without fine-tuning or retraining.
 
 ## Getting Started
 
@@ -48,17 +48,31 @@ All the experiments reported in the paper are in experiments_notebook.ipynb
 - -op : optimizer used for training with the following order ['Adam', 'SGD', 'RMSPROP']
 - -l  : learning rate index with the following order ['1e-1', '1e-2', '1e-3', '1e-5']
 - -bs : batch size used during training
+- -dgl: to enable decoupled greedy learning during the training
 
 ## Sparsifying Models
-    $ python3 sparsify.py
+    $ python3 run_sparsify.py
 ### Arguments
 starts with same arguments as training to select the right experiment directory with the following extra arguments
 - -tt : pruning threshold (neurons having an importance score below the threshold will be pruned)
 - -sw : \lambda used to control loss on accuracy (more weight will prune less to keep predictive capacity)
 - -ft : flag to enable fine tuning after pruning
 - -te : number of fine tuning epochs
+- -n  : number of data points as input to the MIP
+- -mth: a flag when enabled will use mean of layer's importance score as the compression's cut-off threshold
+- -f  : a flag that forces re-computing the neuron importance score instead of using cached results from previous runs
+- -rl : a flag to relax ReLU constraints
+- -dgl: to use auxiliary networks trained per layer to compute neuron importance score for large models
 
-## Verification Experiment
+## Sparsifying every n iterations/epochs
+    $ python3 train_sparsify.py
+### Arguments
+  starts with same arguments as training and sparsify to select the right experiment directory with the following extra arguments
+  - -trst : a flag to run sparsify every n iterations, if disabled will run every n epochs
+  - -ent  : an integer for n between epochs/iterations to apply sparsification
+  - -incr : a flag to enable incremental training of computed sub-network  
+
+## Verification Experiments
     $ python3  verify_selected_data.py
 with same arguments as sparsifying models to plot the pruning percentage and the accuracy changes when the batch of images fed to the MIP changes
 

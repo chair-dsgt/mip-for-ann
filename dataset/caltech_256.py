@@ -3,15 +3,15 @@ from PIL import Image
 import os
 import os.path
 import glob
-import numpy as np
-import sys
 
-from scipy.misc import imread
+from matplotlib.pyplot import imread
 import torch
 import torch.utils.data as data
 from torchvision.datasets.utils import download_url, check_integrity
 
 # https://authors.library.caltech.edu/7694/
+# Adapted from https://gist.github.com/yangarbiter/33a706011d1a833485fdc5000df55d25
+
 
 class Caltech256(data.Dataset):
     """`Caltech256.
@@ -27,14 +27,15 @@ class Caltech256(data.Dataset):
             puts it in root directory. If dataset is already downloaded, it is not
             downloaded again.
     """
-    base_folder = '256_ObjectCategories'
+
+    base_folder = "256_ObjectCategories"
     url = "http://www.vision.caltech.edu/Image_Datasets/Caltech256/256_ObjectCategories.tar"
     filename = "256_ObjectCategories.tar"
-    tgz_md5 = '67b4f42ca05d46448c6bb8ecd2220f6d'
+    tgz_md5 = "67b4f42ca05d46448c6bb8ecd2220f6d"
 
-    def __init__(self, root, train=True,
-                 transform=None, target_transform=None,
-                 download=False):
+    def __init__(
+        self, root, train=True, transform=None, target_transform=None, download=False
+    ):
         self.root = os.path.expanduser(root)
         self.transform = transform
         self.target_transform = target_transform
@@ -43,18 +44,21 @@ class Caltech256(data.Dataset):
             self.download()
 
         if not self._check_integrity():
-            raise RuntimeError('Dataset not found or corrupted.' +
-                               ' You can use download=True to download it')
+            raise RuntimeError(
+                "[Exception] Dataset not found or corrupted."
+                + " You can use download=True to download it"
+            )
         self.class_to_idx = {}
         self.data = []
         self.labels = []
         for cat in range(1, 258):
-            cat_dirs = glob.glob(os.path.join(
-                self.root, self.base_folder, '%03d*' % cat))
+            cat_dirs = glob.glob(
+                os.path.join(self.root, self.base_folder, "%03d*" % cat)
+            )
             for fdir in cat_dirs:
-                for fimg in glob.glob(os.path.join(fdir, '*.jpg')):
-                    #img = imread(fimg)
-                    #img = Image.open(fimg).convert("RGB")
+                for fimg in glob.glob(os.path.join(fdir, "*.jpg")):
+                    # img = imread(fimg)
+                    # img = Image.open(fimg).convert("RGB")
 
                     self.data.append(fimg)
                     self.labels.append(cat - 1)
@@ -109,13 +113,15 @@ class Caltech256(data.Dataset):
         os.chdir(cwd)
 
     def __repr__(self):
-        fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
-        fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())
-        fmt_str += '    Root Location: {}\n'.format(self.root)
-        tmp = '    Transforms (if any): '
-        fmt_str += '{0}{1}\n'.format(
-            tmp, self.transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
-        tmp = '    Target Transforms (if any): '
-        fmt_str += '{0}{1}'.format(
-            tmp, self.target_transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
+        fmt_str = "Dataset " + self.__class__.__name__ + "\n"
+        fmt_str += "    Number of datapoints: {}\n".format(self.__len__())
+        fmt_str += "    Root Location: {}\n".format(self.root)
+        tmp = "    Transforms (if any): "
+        fmt_str += "{0}{1}\n".format(
+            tmp, self.transform.__repr__().replace("\n", "\n" + " " * len(tmp))
+        )
+        tmp = "    Target Transforms (if any): "
+        fmt_str += "{0}{1}".format(
+            tmp, self.target_transform.__repr__().replace("\n", "\n" + " " * len(tmp))
+        )
         return fmt_str

@@ -1,9 +1,10 @@
 import torch.nn as nn
 import torch
 import copy
+from .masked import Masked
 
 
-class MaskedLinear(nn.Module):
+class MaskedLinear(Masked):
     def __init__(self, in_dim, out_dim, indices_mask=None):
         """initialization of masked linear layer
         
@@ -14,18 +15,21 @@ class MaskedLinear(nn.Module):
         
         Keyword Arguments:
             indices_mask {list} --  list of two lists containing indices for dimensions 0 and 1, used to create the mask, dimension 0 in_dim and dimension 1 out dim which is n neurons (default: {None})
-        """        
-        super(MaskedLinear, self).__init__()
-        if indices_mask is not None:
-            self.mask_neurons(indices_mask)
-        self.name = 'linear'
+        """
+        super().__init__("linear", indices_mask)
         self.linear = nn.Linear(in_dim, out_dim)
         self.in_features = self.linear.in_features
         self.out_features = self.linear.out_features
         self.output_size = self.out_features
         self.input_size = self.in_features
-        self.handle = None
-        self.has_indices_mask = False
+
+    def get_layer(self):
+        """used to return underlying masked layer
+        
+        Returns:
+            nn.module -- pytorch layer being masked 
+        """
+        return self.linear
 
     @staticmethod
     def copy_layer(linear_layer, input_size=-1):
@@ -39,9 +43,10 @@ class MaskedLinear(nn.Module):
         
         Returns:
             MaskedConv -- returns a cloned MaskedConv object of the pytorch layer
-        """        
-        new_layer = MaskedLinear(
-            linear_layer.in_features, linear_layer.out_features)
+        """
+        if isinstance(linear_layer, MaskedLinear):
+            linear_layer = linear_layer.linear
+        new_layer = MaskedLinear(linear_layer.in_features, linear_layer.out_features)
         # copy weights to the new layer
         new_layer.linear.weight.data = copy.deepcopy(linear_layer.weight.data)
         new_layer.linear.bias.data = copy.deepcopy(linear_layer.bias.data)
@@ -52,7 +57,7 @@ class MaskedLinear(nn.Module):
         
         Arguments:
             indices_mask {list} -- list of indices of parameters to be masked in Linear layer
-        """        
+        """
         if len(indices_mask) > 0:
             self.has_indices_mask = True
         self.mask = torch.zeros([self.out_features, self.in_features]).bool()
@@ -61,42 +66,6 @@ class MaskedLinear(nn.Module):
         else:
             self.mask[indices_mask] = 1  # create mask
         self.mask_cached_neurons()
-
-    def mask_cached_neurons(self):
-        """
-        set masked weights to zero
-        """        
-        if self.has_indices_mask:
-            self.linear.weight.data[self.mask] = 0
-
-    def backward_hook(self, grad):
-        """
-        a callback backward hook called by pytorch during gradient computation
-        
-        Arguments:
-            grad {tensor} -- gradients of the parameter that pytorch registered this hook on
-        
-        Returns:
-            [tensor] -- updated gradients
-        """  
-        # Clone due to not being allowed to modify in-place gradients
-        out = grad.clone()
-        out[self.mask] = 0
-        return out
-
-    def register_masking_hooks(self):
-        """
-        register backward hook on convolutional weights for backprop through a sparse model
-        """   
-        if self.has_indices_mask and self.handle is None:
-            self.handle = self.linear.weight.register_hook(self.backward_hook)
-
-    def unregister_masking_hooks(self):
-        """
-        unregister an existing masking hooks after finishing trainingbecause hooks would make predictions slower
-        """  
-        if self.handle is not None:
-            self.handle.remove()
 
     def forward(self, x):
         """
@@ -107,8 +76,18 @@ class MaskedLinear(nn.Module):
         
         Returns:
             tensor -- Linear layer output
-        """  
+        """
+        self._assert_masked()
         x = self.linear(x)
-        if self.has_indices_mask:
-            assert (self.linear.weight.data[self.mask] == 0).all()
         return x
+
+    def get_sparsified_param_size(self, masked_indices):
+        """computes the size of the parameters sparsified based on masked indices
+        
+        Arguments:
+            masked_indices {np.array} -- list of indices to be masked from convolution layer (neuron index)
+        
+        Returns:
+            int -- number of parameters that are sparsified using the input masked indices
+        """
+        return len(masked_indices) * self.in_features

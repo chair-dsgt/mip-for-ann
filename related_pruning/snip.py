@@ -9,16 +9,25 @@ import math
 # adapted from https://github.com/mi-lad/snip
 # https://arxiv.org/abs/1810.02340
 
+
 def snip_forward_conv2d(self, x):
-        return F.conv2d(x, self.weight * self.weight_mask, self.bias,
-                        self.stride, self.padding, self.dilation, self.groups)
+    return F.conv2d(
+        x,
+        self.weight * self.weight_mask,
+        self.bias,
+        self.stride,
+        self.padding,
+        self.dilation,
+        self.groups,
+    )
 
 
 def snip_forward_linear(self, x):
-        return F.linear(x, self.weight * self.weight_mask, self.bias)
+    return F.linear(x, self.weight * self.weight_mask, self.bias)
 
 
 def SNIP(net, keep_ratio, train_dataloader, device):
+
     # Grab a single batch from the training dataset
     inputs, targets = next(iter(train_dataloader))
     inputs = inputs.to(device)
@@ -66,5 +75,4 @@ def SNIP(net, keep_ratio, train_dataloader, device):
     keep_masks = []
     for g in grads_abs:
         keep_masks.append(((g / norm_factor) >= acceptable_score).float())
- 
-    return(keep_masks)
+    return keep_masks

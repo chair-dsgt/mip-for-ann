@@ -1,13 +1,12 @@
 from torch.utils.data import Dataset
 import numpy as np
 import torch
-from training import device
-import torch
 
 
 class BalancedDataLoader(Dataset):
     """to sample a data point for each input class when we dont use shuffling used to sample balanced batches for MIP solver
-    """    
+    """
+
     def __init__(self, dataset, selected_indices=None):
         """initialize balanced data loader that loads balanced classes in each batch
         
@@ -16,7 +15,7 @@ class BalancedDataLoader(Dataset):
         
         Keyword Arguments:
             selected_indices {np.array} -- indices selected from input dataset if we want a subset of the input dataset (default: {None})
-        """        
+        """
         self.dataset = dataset
         self.targets = dataset.targets
         self.indices_per_class = {}
@@ -36,8 +35,11 @@ class BalancedDataLoader(Dataset):
             labels = labels[self.selected_indices]
         self.n_classes = len(class_indxs)
         for class_indx in class_indxs:
-            class_indices = (torch.from_numpy(
-                np.array(self.targets)) == class_indx).nonzero().numpy()
+            class_indices = (
+                (torch.from_numpy(np.array(self.targets)) == class_indx)
+                .nonzero()
+                .numpy()
+            )
 
             self.indices_per_class[class_indx] = class_indices
             self.n_data += len(class_indices)
@@ -48,8 +50,9 @@ class BalancedDataLoader(Dataset):
 
     def __getitem__(self, index):
         class_indx = int(index % self.n_classes)
-        current_indx = self.indices_per_class[class_indx][index %
-                                                          self.n_data_per_class[class_indx]]
+        current_indx = self.indices_per_class[class_indx][
+            index % self.n_data_per_class[class_indx]
+        ]
         X, y = self.dataset[current_indx.item()]
         return X, y
 
@@ -58,7 +61,7 @@ class BalancedDataLoader(Dataset):
         
         Returns:
             tuple -- a data point along with its label
-        """        
+        """
         label = np.random.randint(0, self.n_classes)
         return self.sample_itm_class(label)
 
@@ -70,7 +73,8 @@ class BalancedDataLoader(Dataset):
         
         Returns:
             tuple -- a data point along with its label
-        """        
-        current_indx = self.indices_per_class[label][np.random.randint(
-            0, self.n_data_per_class[label])]
+        """
+        current_indx = self.indices_per_class[label][
+            np.random.randint(0, self.n_data_per_class[label])
+        ]
         return self.dataset[current_indx.item()]
