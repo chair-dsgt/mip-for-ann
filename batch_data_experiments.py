@@ -16,7 +16,7 @@ import torch
 Observations
 taking average of multiple runs on different data points is almost same as running all data points in parallel
 over-confident class output or data tends to prune less neurons and gives a lossless compression
-confusing class output ioncreases the search space for the mip to select which neurons are not important 
+confusing class output increases the search space for the mip to select which neurons are not important 
 """
 
 

@@ -3,6 +3,7 @@ import torch
 import copy
 import math
 from .masked import Masked
+import numpy as np
 
 
 class MaskedConv(Masked):
@@ -137,9 +138,11 @@ class MaskedConv(Masked):
         Returns:
             int -- number of parameters that are sparsified using the input masked indices
         """
-        return (
-            len(masked_indices)
-            * self.kernel_size[0]
-            * self.kernel_size[1]
-            * self.in_channels
-        )
+        if masked_indices.ndim == 1:
+            return (
+                len(masked_indices)
+                * self.kernel_size[0]
+                * self.kernel_size[1]
+                * self.in_channels
+            )
+        return np.count_nonzero(masked_indices)

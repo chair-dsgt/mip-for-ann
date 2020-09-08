@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import copy
 from .masked import Masked
+import numpy as np
 
 
 class MaskedLinear(Masked):
@@ -90,4 +91,6 @@ class MaskedLinear(Masked):
         Returns:
             int -- number of parameters that are sparsified using the input masked indices
         """
-        return len(masked_indices) * self.in_features
+        if masked_indices.ndim == 1:
+            return len(masked_indices) * self.in_features
+        return np.count_nonzero(masked_indices)

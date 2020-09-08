@@ -26,12 +26,7 @@ def snip_forward_linear(self, x):
     return F.linear(x, self.weight * self.weight_mask, self.bias)
 
 
-def SNIP(net, keep_ratio, train_dataloader, device):
-
-    # Grab a single batch from the training dataset
-    inputs, targets = next(iter(train_dataloader))
-    inputs = inputs.to(device)
-    targets = targets.to(device)
+def SNIP(net, keep_ratio, inputs, targets, prune_neurons=False, trained_network=False):
 
     # Let's create a fresh copy of the network so that we're not worried about
     # affecting the actual training-phase
@@ -42,7 +37,8 @@ def SNIP(net, keep_ratio, train_dataloader, device):
     for layer in net.model:
         if isinstance(layer, nn.Conv2d) or isinstance(layer, nn.Linear):
             layer.weight_mask = nn.Parameter(torch.ones_like(layer.weight))
-            nn.init.xavier_normal_(layer.weight)
+            if not(trained_network):
+                nn.init.xavier_normal_(layer.weight)
             layer.weight.requires_grad = False
 
         # Override the forward methods:
@@ -64,7 +60,10 @@ def SNIP(net, keep_ratio, train_dataloader, device):
             grads_abs.append(torch.abs(layer.weight_mask.grad))
 
     # Gather all scores in a single vector and normalise
-    all_scores = torch.cat([torch.flatten(x) for x in grads_abs])
+    if prune_neurons:
+        all_scores = torch.cat([torch.flatten(torch.sum(torch.reshape(x, (x.shape[0], -1)), axis=1)) for x in grads_abs])
+    else:
+        all_scores = torch.cat([torch.flatten(x) for x in grads_abs])
     norm_factor = torch.sum(all_scores)
     all_scores.div_(norm_factor)
 
@@ -74,5 +73,8 @@ def SNIP(net, keep_ratio, train_dataloader, device):
 
     keep_masks = []
     for g in grads_abs:
-        keep_masks.append(((g / norm_factor) >= acceptable_score).float())
+        current_score = g / norm_factor
+        if prune_neurons:
+            current_score = torch.sum(torch.reshape(current_score, (current_score.shape[0], -1)), axis=1)
+        keep_masks.append(((current_score) >= acceptable_score).float())
     return keep_masks

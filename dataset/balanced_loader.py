@@ -36,8 +36,7 @@ class BalancedDataLoader(Dataset):
         self.n_classes = len(class_indxs)
         for class_indx in class_indxs:
             class_indices = (
-                (torch.from_numpy(np.array(self.targets)) == class_indx)
-                .nonzero()
+                torch.nonzero(torch.from_numpy(np.array(self.targets)) == class_indx, as_tuple=False)
                 .numpy()
             )
 

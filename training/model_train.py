@@ -99,12 +99,12 @@ class ModelTrain:
             parent_storage_dir, self.model.name + "_" + Mode.MASK.name + ".pt"
         )
         model_path = self._get_model_ckpt_path()
-        if self.finetune_masked:
-            # loading masked model initialization and setting layer importance
-            model_init_path = os.path.join(
-                parent_storage_dir, self.model.name + "_init.pt"
-            )
+
+        # loading masked model initialization if exists
+        model_init_path = os.path.join(parent_storage_dir, self.model.name + "_init.pt")
+        if os.path.isfile(model_init_path):
             self.load_model_init(model_init_path)
+        if self.finetune_masked:
             # now based on the loaded init creating the masked version
             self.swap_pytorch_layers()
             model_masked_loaded = self.load_model_masked(masked_model_path)
@@ -198,6 +198,19 @@ class ModelTrain:
         if self.incremental_sparsify and self.model_masked is not None:
             return self.model_masked
         return self.model
+
+    def set_model_to_sparsify(self, model):
+        """sets the model that needs to be sparsified 
+        Args:
+            model : pytorch model
+        """
+        if self.decoupled_train and self.submodule_indx != -1:
+            self.pl_model[self.submodule_indx] = model
+        if self.sparsify_masked:
+            self.model_masked = model
+        if self.incremental_sparsify and self.model_masked is not None:
+            self.model_masked = model
+        self.model = model
 
     def add_train_listener(self, event_name="epoch", handler=None):
         """add event handler to be called on every training step or epoch
@@ -320,7 +333,12 @@ class ModelTrain:
         try:
             checkpoint = torch.load(path, map_location=self._device)
             self.model_masked.load_state_dict(checkpoint["model_state_dict"])
-            self.masking_indices = checkpoint["masking_indices"]
+            self.masking_indices = {
+                layer: checkpoint["masking_indices"][layer].cpu()
+                if torch.is_tensor(checkpoint["masking_indices"][layer])
+                else checkpoint["masking_indices"][layer]
+                for layer in checkpoint["masking_indices"]
+            }
             self._logger.info("Masked Model {} loaded".format(self.model_masked.name))
             self.model_masked.eval()
             return True
@@ -537,11 +555,16 @@ class ModelTrain:
         model_summary_table = PrettyTable(col_names)
         model_list = []
         if test_original_model and not (self.finetune_masked):
-            model_list = [("Original Model " + self.model.name, self.model)]
+            model_list = [
+                ("Original Model " + self.model.name, self.model.to(self._device))
+            ]
         if test_masked_model:
             if self.model_masked is not None:
                 model_list.append(
-                    ("Masked Model " + self.model_masked.name, self.model_masked)
+                    (
+                        "Masked Model " + self.model_masked.name,
+                        self.model_masked.to(self._device),
+                    )
                 )
         # saving heat map on some sample images
         if val_loader is not None:
