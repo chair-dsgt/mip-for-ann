@@ -22,25 +22,38 @@ def prepare_config():
     parser.add_argument("--step", "-trst", action="store_true")
     # run sparsification every n train step / epoch
     parser.add_argument("--every-n", "-ent", default=1, type=int)
-    # run incremental sparsification 
+    # run incremental sparsification
     parser.add_argument("--incremental", "-incr", action="store_true")
     config = parser.parse_args()
     return config
 
 
-def plot_pruning_evolution(out_file_path, x_data, y_data, ylabel, xlabel="Iteration"):
+def plot_pruning_evolution(
+    out_file_path,
+    x_data,
+    y_data,
+    ylabel,
+    xlabel="Iteration",
+    step_size=1,
+    disable_x_axis=True,
+):
     data_frame = create_dataframe(x_data, y_data, "")
     plot_df(
-        data_frame, out_file_path, ylabel=ylabel, xlabel=xlabel, disable_x_axis=True,
+        data_frame,
+        out_file_path,
+        ylabel=ylabel,
+        xlabel=xlabel,
+        disable_x_axis=disable_x_axis,
+        step_size=step_size,
     )
 
 
 if __name__ == "__main__":
     config = prepare_config()
     data_loaders = prepare_dataset(config)
-    train_loader = data_loaders['train']
-    val_loader = data_loaders['val']
-    test_loader = data_loaders['test']
+    train_loader = data_loaders["train"]
+    val_loader = data_loaders["val"]
+    test_loader = data_loaders["test"]
     batch_size = val_loader.batch_size
     mip_data_loader = MIPBatchLoader(
         config,
@@ -66,7 +79,7 @@ if __name__ == "__main__":
         exp_indx=0,
         prefix="_train_sparsify",
         use_cached=False,
-        incremental_sparsify=config.incremental
+        incremental_sparsify=config.incremental,
     )
     log_config(model_train._logger, config)
     x_label_data_list = []
@@ -181,6 +194,8 @@ if __name__ == "__main__":
         parameter_removed_list,
         "Pruning Percentage",
         xlabel="Iteration" if config.step else "Epoch",
+        step_size=5,
+        disable_x_axis=False,
     )
 
     # plotting masked test accuracy
@@ -193,6 +208,8 @@ if __name__ == "__main__":
         masked_test_acc,
         "Masked Test Acc",
         xlabel="Iteration" if config.step else "Epoch",
+        step_size=5,
+        disable_x_axis=False,
     )
 
     # plotting masked train accuracy
@@ -205,6 +222,8 @@ if __name__ == "__main__":
         masked_train_acc,
         "Masked Train Acc",
         xlabel="Iteration" if config.step else "Epoch" if config.step else "Epoch",
+        step_size=5,
+        disable_x_axis=False,
     )
 
     # plotting original train accuracy
@@ -217,6 +236,8 @@ if __name__ == "__main__":
         original_train_acc,
         "Original Train Acc",
         xlabel="Iteration" if config.step else "Epoch",
+        step_size=5,
+        disable_x_axis=False,
     )
 
     # plotting original test accuracy
@@ -229,6 +250,8 @@ if __name__ == "__main__":
         original_test_acc,
         "Original Test Acc",
         xlabel="Iteration" if config.step else "Epoch",
+        step_size=5,
+        disable_x_axis=False,
     )
 
     # plotting original vs masked evolution Train
@@ -239,6 +262,8 @@ if __name__ == "__main__":
         ylabel="Train Accuracy",
         xlabel="Iteration" if config.step else "Epoch",
         storage_parent_dir=model_train.storage_parent_dir,
+        step_size=5,
+        disable_x_axis=False,
     )
 
     # plotting original vs masked evolution Test
@@ -249,4 +274,6 @@ if __name__ == "__main__":
         ylabel="Test Accuracy",
         xlabel="Iteration" if config.step else "Epoch",
         storage_parent_dir=model_train.storage_parent_dir,
+        step_size=5,
+        disable_x_axis=False,
     )

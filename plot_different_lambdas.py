@@ -1,4 +1,3 @@
-
 import os
 from training.utils import Mode, log_mean_std, log_config
 from sparsify import SparsifyModel
@@ -26,9 +25,9 @@ def prepare_config():
 if __name__ == "__main__":
     config = prepare_config()
     data_loaders = prepare_dataset(config)
-    train_loader = data_loaders['train']
-    val_loader = data_loaders['val']
-    test_loader = data_loaders['test']
+    train_loader = data_loaders["train"]
+    val_loader = data_loaders["val"]
+    test_loader = data_loaders["test"]
     mip_data_loader = MIPBatchLoader(
         config, val_loader, epsilon=1e-5, is_conv_model=model_indx_is_conv[config.model]
     )
@@ -120,6 +119,7 @@ if __name__ == "__main__":
         "Lambda value",
         model_train.storage_parent_dir,
         disable_x_axis=False,
+        step_size=4,
     )
 
     # Plot Test Data
@@ -135,6 +135,7 @@ if __name__ == "__main__":
         "Lambda Value",
         model_train.storage_parent_dir,
         disable_x_axis=False,
+        step_size=4,
     )
 
     # Plot loss Train data
@@ -150,6 +151,7 @@ if __name__ == "__main__":
         "Lambda Value",
         model_train.storage_parent_dir,
         disable_x_axis=False,
+        step_size=4,
     )
 
     # Plot Test Data
@@ -165,6 +167,7 @@ if __name__ == "__main__":
         "Lambda Value",
         model_train.storage_parent_dir,
         disable_x_axis=False,
+        step_size=4,
     )
 
     # Plot Percentage of removal on different input data
@@ -178,9 +181,12 @@ if __name__ == "__main__":
         ylabel="Pruning Percentage",
         xlabel="Lambda Value",
         disable_x_axis=False,
+        step_size=4,
     )
     log_mean_std(model_train._logger, "Original Train Acc", original_model_train_acc)
     log_mean_std(model_train._logger, "Masked Train Acc", masked_train_acc)
     log_mean_std(model_train._logger, "Original Test Acc", original_model_test_acc)
     log_mean_std(model_train._logger, "Masked Test Acc", masked_test_acc)
-    log_mean_std(model_train._logger, "Pruning Percentage", parameters_removed_percentage_list)
+    log_mean_std(
+        model_train._logger, "Pruning Percentage", parameters_removed_percentage_list
+    )

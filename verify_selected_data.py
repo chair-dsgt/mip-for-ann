@@ -29,9 +29,9 @@ def prepare_config():
 if __name__ == "__main__":
     config = prepare_config()
     data_loaders = prepare_dataset(config)
-    train_loader = data_loaders['train']
-    val_loader = data_loaders['val']
-    test_loader = data_loaders['test']
+    train_loader = data_loaders["train"]
+    val_loader = data_loaders["val"]
+    test_loader = data_loaders["test"]
     n_batches = len(val_loader)
     batch_size = val_loader.batch_size
     mip_data_loader = MIPBatchLoader(
@@ -144,6 +144,8 @@ if __name__ == "__main__":
         "Train Accuracy",
         "batch index",
         model_train.storage_parent_dir,
+        disable_x_axis=False,
+        step_size=5,
     )
 
     # Plot Test Data
@@ -158,6 +160,8 @@ if __name__ == "__main__":
         "Test Accuracy",
         "batch index",
         model_train.storage_parent_dir,
+        disable_x_axis=False,
+        step_size=5,
     )
 
     # Plot loss Train data
@@ -172,6 +176,8 @@ if __name__ == "__main__":
         "Train Loss",
         "batch index",
         model_train.storage_parent_dir,
+        disable_x_axis=False,
+        step_size=5,
     )
 
     # Plot Test Data
@@ -186,6 +192,8 @@ if __name__ == "__main__":
         "Test Loss",
         "batch index",
         model_train.storage_parent_dir,
+        disable_x_axis=False,
+        step_size=5,
     )
 
     # Plot Percentage of removal on different input data
@@ -198,7 +206,8 @@ if __name__ == "__main__":
         pruning_file_path,
         ylabel="Pruning Percentage",
         xlabel="batch index",
-        disable_x_axis=True,
+        disable_x_axis=False,
+        step_size=5,
     )
 
     # Plot Accuracy of validation batch on input data
@@ -211,7 +220,8 @@ if __name__ == "__main__":
         batch_accuracy_path,
         ylabel="Batch Accuracy",
         xlabel="batch index",
-        disable_x_axis=True,
+        disable_x_axis=False,
+        step_size=5,
     )
 
     # Plot Accuracy of validation batch on input data
@@ -222,7 +232,8 @@ if __name__ == "__main__":
         batch_loss_path,
         ylabel="Batch Loss",
         xlabel="batch index",
-        disable_x_axis=True,
+        disable_x_axis=False,
+        step_size=5,
     )
 
     def log_info(suffix, data):
